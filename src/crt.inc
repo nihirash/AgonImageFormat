@@ -7,10 +7,10 @@ argc:
 argv:
     dl 0
     
-	align 64
-	db "MOS" ; Header
-	db 00    ; Version
-	db 01 	 ; ADL
+    align 64
+    db "MOS" ; Header
+    db 00    ; Version
+    db 01 	 ; ADL
 
 _start:
     push ix
