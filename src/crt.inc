@@ -14,10 +14,12 @@ argv:
 
 _start:
     push ix
+    push iy
+    ld (stack_save), sp
+
     ld ix,argv
     call _parse_args
-    pop ix
-
+    
     di
     ld a, mb
     ld (old_mb), a
@@ -37,6 +39,11 @@ exit:
     di
     ld a, (old_mb)
     ld mb, a
+    
+    ld sp, (stack_save)
+
+    pop iy
+    pop ix
 
     ld hl, 0
     ei
@@ -44,6 +51,9 @@ exit:
 
 old_mb:
     db 0
+
+stack_save:
+    dl 0
 
 _parse_args:
     call _skip_spaces

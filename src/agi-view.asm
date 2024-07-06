@@ -1,9 +1,9 @@
-MAX_ARGS:   EQU     1
+MAX_ARGS:   EQU     3
     include "crt.inc"
 _main:
     ld hl, (argv)
     ld de, buffer
-    ld bc, $fff0
+    ld bc, 0
     MOSCALL MOS_LOAD
     
     or a
