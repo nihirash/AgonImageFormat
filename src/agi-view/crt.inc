@@ -121,5 +121,9 @@ _skip_spaces:
     rst.lil $18
     endmacro
 
-MOS_LOAD:       equ     $01
 MOS_GET_KEY:    equ     $00
+MOS_LOAD:       equ     $01
+
+MOS_FOPEN:      equ     $0A
+MOS_FCLOSE:     equ     $0B
+MOS_FGETC:      equ     $0C

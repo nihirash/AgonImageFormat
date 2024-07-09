@@ -11,7 +11,7 @@ _main:
 
     xor a
     ld hl, buffer
-    call agon_image_load
+    call agon_image_load_from_ram
     jp nz, wrong_file
 
     ld hl, @show
@@ -66,7 +66,7 @@ no_args:
     db "Usage: agi-view <filename>",13, 10, 0
 
 
-    include "vdp-loader.asm"
+    include "../agon-image-ram-loader.asm"
 
 buffer:
     db 0

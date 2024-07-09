@@ -1,4 +1,4 @@
-;; Agon Image Format loader
+;; Agon Image Format loader(from FILE)
 ;; ========================
 ;; (c) 2024 Aleksandr Sharikhin
 ;;
@@ -6,135 +6,152 @@
 
 ;; Extracts image from ram to VDP buffer
 ;; A - buffer number
-;; HL - pointer to agon image
-agon_image_load:
+;; HL - pointer to filename
+agon_image_load_from_file:
 ;; Store buffer ID to vars
     ld (@buff), a
     ld (@buff1), a
     ld (@bmid), a
 
+    ld c, 01 ; MOS_FA_READ
+    MOSCALL MOS_FOPEN
+    or a
+    jp z, @fopen_err
+
+    ld (@fp + 1), a
+
 ;; check header
-    ld a, (hl)
+    call @fgetc
     cp 'I'
-    ret nz
+    jp nz, @format_err
 
-    inc hl
-    ld a, (hl)
+    call @fgetc
     cp 'M'
-    ret nz
-
-    inc hl
+    jp nz, @format_err
 
 ;; Copy raw data lenght to command
-    ld a, (hl)
+    call @fgetc
     ld (@len), a
     ld (@notpacked+1), a
-    inc hl
-    ld a, (hl)
+
+    call @fgetc
     ld (@len + 1), a
     ld (@notpacked+2), a
 
 ;; Send command that will await bytes of RGB2222 image
-    push hl
     ld hl, @cmd1
     ld bc, @cmd1_end - @cmd1
     rst.lil $18
-    pop hl
-
+    
 ;; Storing pixel size of image(Width/height)
     ld de, @iw
-    inc hl
-    ld a, (hl)
+    call @fgetc
     ld (de), a
-    inc hl
     inc de
-    ld a, (hl)
+    call @fgetc
     ld (de), a
-    inc hl
     inc de
-    ld a, (hl)
+    call @fgetc
     ld (de), a
-    inc hl
     inc de
-    ld a, (hl)
+    call @fgetc
     ld (de), a
-    inc hl
 
 ;; Is our image RLE encoded?
-    ld a, (hl)
-    inc hl
+    call @fgetc
     and a
     jp z, @notpacked
     ;; Packed
     
 ;; Packed words count
-    ld a, (hl)
+    call @fgetc
     ld c, a
-    inc hl
-    ld a, (hl)
+    call @fgetc
     ld b, a
 
-    inc hl
 @unpack_loop:
     push bc
 ;; How many copies of byte
-    ld a, (hl)
+    call @fgetc
     ld b, a
-
-    inc hl
-;; Byte itself
-    ld a, (hl)
-    inc hl
-
-    push hl
+    call @fgetc
 ;; Sending them to VDP
 @send_loop:
     rst.lil $10
     djnz @send_loop
-    pop hl
     pop bc
-    
+
     dec bc
-    
     ld a, b
     or c 
     jr nz, @unpack_loop
-    
     jr @uploaded
 
 ;; If data wasn't RLE encoded
 @notpacked:
     ld bc, 0
-    rst.lil $18
+@notpacked_loop:
+    call @fgetc
+    rst.lil $10
+    dec bc
+
+    ld a, b
+    or c
+    jr nz, @notpacked_loop
 
 @uploaded:
     ld hl, @cmd2
     ld bc, @cmd2_end - @cmd2
     rst.lil $18
 
+    ld a, (@fp + 1)
+    ld c, a
+    MOSCALL MOS_FCLOSE
+
     xor a
+    ret
+@fopen_err:
+    ld a, 1
+    or a
+    ret
+@format_err:
+    ld a, (@fp + 1)
+    ld c, a
+    MOSCALL MOS_FCLOSE
+
+    ld a, 2
+    or a 
+    ret
+
+@fgetc:
+    push bc
+@fp:
+    ld c, 0
+    MOSCALL MOS_FGETC   
+    pop bc
     ret
 
 @cmd1:
+    ;; Clean buffer
     db 23, 0, $A0
 @buff:
-    db 0
-    db 0
+    dw 0
     db 2
-    ;; Load 
+    ;; Load to buffer
     db 23, 0, $A0
 @buff1:
-    db 0
-    db 0
+    dw 0
     db 0
 @len:
     dw 0
 @cmd1_end:
 
 @cmd2:
+    ;; Select image by buffer
     db 23, 27, $20
 @bmid:
     dw 0
+    ;; Make image from buffer
     db 23, 27, $21
 @iw:
     dw 0
