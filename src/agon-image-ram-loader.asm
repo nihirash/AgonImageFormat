@@ -12,6 +12,8 @@ agon_image_load_from_ram:
     ld (@buff), a
     ld (@buff1), a
     ld (@bmid), a
+    ld (@decompress_buff), a
+    ld (@source_buff), a
 
 ;; check header
     ld a, (hl)
@@ -64,17 +66,20 @@ agon_image_load_from_ram:
     ld a, (hl)
     inc hl
     and a
-    jp z, @notpacked
+    jp z, @notpacked ; 0
     ;; Packed
     
+    cp 2 ; TurboVega
+    jp z, @turbo
+
 ;; Packed words count
     ld a, (hl)
     ld c, a
     inc hl
     ld a, (hl)
     ld b, a
-
     inc hl
+    
 @unpack_loop:
     push bc
 ;; How many copies of byte
@@ -115,6 +120,21 @@ agon_image_load_from_ram:
     xor a
     ret
 
+@turbo:
+    ld a, (hl)
+    ld c, a
+    inc hl
+    ld a, (hl)
+    ld b, a
+    inc hl
+    rst.lil $18
+
+    ld hl, @unpack_cmd
+    ld bc, @unpack_end - @unpack_cmd
+    rst.lil $18
+    jr @uploaded
+
+
 @cmd1:
     ;; Clean buffer
     db 23, 0, $A0
@@ -145,3 +165,12 @@ agon_image_load_from_ram:
     dw 0
     db 1
 @cmd2_end:
+
+@unpack_cmd:
+    db 23, 0, $A0
+@decompress_buff:
+    dw 0
+    db 65
+@source_buff:
+    dw 0
+@unpack_end:
