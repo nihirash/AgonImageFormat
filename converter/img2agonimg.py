@@ -195,21 +195,21 @@ def convert_image(filename):
 
     datum.extend(b'IM')
 
-    if len(bitmap) >= len(lhz_ed_image):
-        datum.extend(len(lhz_ed_image).to_bytes(2, 'little'))
-    else:
-        datum.extend(len(bitmap).to_bytes(2, 'little'))
-    
-    datum.extend(width.to_bytes(2, 'little'))
-    datum.extend(height.to_bytes(2, 'little'))
    # Is your image totally random noise? 
     if len(bitmap) < len(rle_ed_image) and len(bitmap) < len(lhz_ed_image):
         print("Using RAW data")
+        datum.extend(len(bitmap).to_bytes(2, 'little'))
+        datum.extend(width.to_bytes(2, 'little'))
+        datum.extend(height.to_bytes(2, 'little'))
         datum.append(0)
+
         datum.extend(bitmap)
     # I dunno will be possible this or not
     elif len(rle_ed_image) < len(lhz_ed_image):
         print("Using RLE compression data")
+        datum.extend(len(bitmap).to_bytes(2, 'little'))
+        datum.extend(width.to_bytes(2, 'little'))
+        datum.extend(height.to_bytes(2, 'little'))
         datum.append(1)
 
         datum.extend((len(rle_ed_image) // 2).to_bytes(2, 'little'))
@@ -217,8 +217,11 @@ def convert_image(filename):
     # Mostly common case I think
     else:
         print("Using TurboVega data compression")
-        datum.append(2)
         datum.extend(len(lhz_ed_image).to_bytes(2, 'little'))
+        datum.extend(width.to_bytes(2, 'little'))
+        datum.extend(height.to_bytes(2, 'little'))
+
+        datum.append(2)
         datum.extend(lhz_ed_image)
 
     return datum
