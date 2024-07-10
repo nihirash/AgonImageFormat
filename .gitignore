@@ -1,0 +1,3 @@
+*.lst
+tmp/
+src/**/*.bin
