@@ -8,18 +8,20 @@ It's simple wrapper for RGB2222 that simplifies loading it from any media and sh
 
 File starts with two bytes header `IM`(like IMage). 
 
-Next goes this two bytes(word) - size of raw data(bitmap).
+Next goes this two bytes(word) - size of raw data(bitmap) or VDP-packed data size.
 
 After width of image(word) and height(also word).
 
 Next goes status byte - format of stored bitmap:
- * `0` - bitmap stored without RLE compression. After this byte RGB2222 bitmap stored as is.
+ * `0x00` - bitmap stored without RLE compression. After this byte RGB2222 bitmap stored as is.
 
- * `1` - bitmap stored with RLE compression. Next goes:
+ * `0x01` - bitmap stored with RLE compression. Next goes:
   
    - Word that counts how many RLE frames are stored
 
    - RLE frames that built from: first byte - repeats count; second byte - byte that will be repeated
+ 
+ * `0x02` - Bitmap stored with TurboVega's Algo(that supports depacking on VDP side). Faster and larger image possible(cause limit for 64K size already applied for packed data). After this byte packed RGB2222 bitmap stored.
 
 Format can be extended in future but also it built for making usage simple from any source - RAM, disk etc
 
