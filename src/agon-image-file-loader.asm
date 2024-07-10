@@ -12,6 +12,9 @@ agon_image_load_from_file:
     ld (@buff), a
     ld (@buff1), a
     ld (@bmid), a
+    ld (@decompress_buff), a
+    ld (@source_buff), a
+
 
     ld c, 01 ; MOS_FA_READ
     MOSCALL MOS_FOPEN
@@ -63,6 +66,9 @@ agon_image_load_from_file:
     jp z, @notpacked
     ;; Packed
     
+    cp 2
+    jp z, @turbo_packed
+
 ;; Packed words count
     call @fgetc
     ld c, a
@@ -87,6 +93,7 @@ agon_image_load_from_file:
     jr nz, @unpack_loop
     jr @uploaded
 
+
 ;; If data wasn't RLE encoded
 @notpacked:
     ld bc, 0
@@ -110,6 +117,22 @@ agon_image_load_from_file:
 
     xor a
     ret
+@turbo_packed:
+    ld bc, (@notpacked + 1)
+@turbo_upload_loop:
+    call @fgetc
+    rst.lil $10
+    dec bc 
+    ld a, b 
+    or c
+    jr nz, @turbo_upload_loop
+
+    ld hl, @unpack_cmd
+    ld bc, @unpack_end - @unpack_cmd
+    rst.lil $18
+    jr @uploaded
+
+
 @fopen_err:
     ld a, 1
     or a
@@ -159,3 +182,12 @@ agon_image_load_from_file:
     dw 0
     db 1
 @cmd2_end:
+
+@unpack_cmd:
+    db 23, 0, $A0
+@decompress_buff:
+    dw 0
+    db 65
+@source_buff:
+    dw 0
+@unpack_end:

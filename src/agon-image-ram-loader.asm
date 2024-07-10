@@ -121,12 +121,7 @@ agon_image_load_from_ram:
     ret
 
 @turbo:
-    ld a, (hl)
-    ld c, a
-    inc hl
-    ld a, (hl)
-    ld b, a
-    inc hl
+    ld bc, (@notpacked + 1)
     rst.lil $18
 
     ld hl, @unpack_cmd
